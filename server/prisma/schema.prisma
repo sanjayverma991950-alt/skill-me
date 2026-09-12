@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(uuid())
+  name              String
+  email             String    @unique
+  role              String    @default("Student")
+  headline          String
+  bio               String?
+  avatarUrl         String?
+  skillsOffered     String    // JSON encoded array of skills
+  skillsWanted      String    // JSON encoded array of skills
+  rating            Float     @default(5.0)
+  sessionsCompleted Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  sessionsAsMentor  Session[] @relation("MentorSessions")
+  sessionsAsStudent Session[] @relation("StudentSessions")
+}
+
+model Skill {
+  id            String    @id @default(uuid())
+  title         String
+  slug          String    @unique
+  description   String
+  category      String
+  level         String    @default("All Levels")
+  tags          String    // JSON encoded array of tags
+  mentorsCount  Int       @default(0)
+  studentsCount Int       @default(0)
+  featured      Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Session {
+  id          String   @id @default(uuid())
+  mentorId    String
+  studentId   String
+  skillId     String
+  status      String   @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED
+  scheduledAt DateTime
+  durationMin Int      @default(60)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  mentor  User @relation("MentorSessions", fields: [mentorId], references: [id], onDelete: Cascade)
+  student User @relation("StudentSessions", fields: [studentId], references: [id], onDelete: Cascade)
+}
