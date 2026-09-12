@@ -161,7 +161,7 @@ From the root directory or in two separate terminals:
 ```bash
 cd server
 npm run dev
-# Server boots on http://localhost:5000
+# Server boots on http://localhost:8000
 ```
 
 **Terminal 2 (Frontend Client):**
