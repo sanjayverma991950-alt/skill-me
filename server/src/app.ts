@@ -13,9 +13,53 @@ export const createApp = (): Express => {
 
   // Security Middlewares
   app.use(helmet());
+  // Resilient CORS configuration
+  const configuredOrigins = env.CORS_ORIGIN
+    ? env.CORS_ORIGIN.split(',').map((o) => o.trim()).filter((o) => o.startsWith('http://') || o.startsWith('https://'))
+    : [];
+
+  const defaultOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:8000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000',
+  ];
+
+  const allowedOrigins = Array.from(new Set([...defaultOrigins, ...configuredOrigins]));
+
   app.use(
     cors({
-      origin: env.CORS_ORIGIN,
+      origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, server-to-server, test suites)
+        if (!origin) return callback(null, true);
+
+        // Always allow if configured as wildcard
+        if (env.CORS_ORIGIN === '*') return callback(null, true);
+
+        // In development/test mode, accept localhost and common local ports
+        const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+        if (isLocalhost) return callback(null, true);
+
+        // Allow explicitly configured origins
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+
+        // Allow frontend deployments on cloud platforms
+        try {
+          const originHost = new URL(origin).hostname;
+          if (/\.(onrender\.com|vercel\.app|netlify\.app)$/.test(originHost)) {
+            return callback(null, true);
+          }
+        } catch {
+          // ignore url parse error
+        }
+
+        if (env.NODE_ENV !== 'production') {
+          return callback(null, true);
+        }
+
+        return callback(new Error(`CORS blocked for origin: ${origin}`));
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],

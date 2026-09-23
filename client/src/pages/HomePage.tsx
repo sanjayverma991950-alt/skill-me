@@ -14,10 +14,11 @@ import {
 
 interface HomePageProps {
   health: SystemHealth | null;
+  isBackendHealthy?: boolean | null;
   onNavigate: (tab: string) => void;
 }
 
-export const HomePage: FC<HomePageProps> = ({ health, onNavigate }) => {
+export const HomePage: FC<HomePageProps> = ({ health, isBackendHealthy, onNavigate }) => {
   return (
     <div className="space-y-12">
       {/* Hero Section */}
@@ -105,6 +106,22 @@ export const HomePage: FC<HomePageProps> = ({ health, onNavigate }) => {
             </div>
           </div>
         </div>
+        {isBackendHealthy === false && (
+          <div className="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm">
+            <div className="flex items-start gap-3">
+              <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-semibold text-amber-800">Backend Server is Currently Offline</p>
+                <p className="text-amber-700 leading-relaxed">
+                  • <strong>Local Development:</strong> Start both servers together with <code className="px-1.5 py-0.5 bg-amber-100/80 rounded font-mono text-xs">npm run dev</code> from the root folder, or <code className="px-1.5 py-0.5 bg-amber-100/80 rounded font-mono text-xs">npm run dev:server</code> in a terminal.
+                </p>
+                <p className="text-amber-700 leading-relaxed">
+                  • <strong>Cloud / Render Deployment:</strong> Free-tier instances spin down after inactivity and take 30–50 seconds on cold boot. The app will auto-reconnect once the instance wakes up.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Architecture Foundations Highlights */}

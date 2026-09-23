@@ -9,6 +9,7 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   API_PREFIX: z.string().default('/api/v1'),
   APP_NAME: z.string().default('SkillMe API'),
+  DATABASE_URL: z.string().optional(),
 });
 
 const parseEnv = () => {

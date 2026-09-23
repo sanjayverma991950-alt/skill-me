@@ -13,21 +13,35 @@ export const App: FC = () => {
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [isBackendHealthy, setIsBackendHealthy] = useState<boolean | null>(null);
 
-  const checkHealth = async () => {
-    try {
-      const data = await HealthService.getHealth();
-      setHealth(data);
-      setIsBackendHealthy(true);
-    } catch (err) {
-      console.warn('Backend health check error:', err);
-      setIsBackendHealthy(false);
-    }
-  };
-
   useEffect(() => {
-    checkHealth();
-    const interval = setInterval(checkHealth, 15000);
-    return () => clearInterval(interval);
+    let timer: ReturnType<typeof setTimeout>;
+    let isMounted = true;
+
+    const performHealthCheck = async () => {
+      try {
+        const data = await HealthService.getHealth();
+        if (isMounted) {
+          setHealth(data);
+          setIsBackendHealthy(true);
+        }
+        // When healthy, poll every 20 seconds
+        timer = setTimeout(performHealthCheck, 20000);
+      } catch (err) {
+        console.warn('Backend health check error:', err);
+        if (isMounted) {
+          setIsBackendHealthy(false);
+        }
+        // When offline, poll more frequently (every 5 seconds) to catch startup quickly
+        timer = setTimeout(performHealthCheck, 5000);
+      }
+    };
+
+    performHealthCheck();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, []);
 
   return (
@@ -41,7 +55,11 @@ export const App: FC = () => {
 
         <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
           {currentTab === 'home' && (
-            <HomePage health={health} onNavigate={setCurrentTab} />
+            <HomePage
+              health={health}
+              isBackendHealthy={isBackendHealthy}
+              onNavigate={setCurrentTab}
+            />
           )}
           {currentTab === 'skills' && <SkillsPage />}
           {currentTab === 'architecture' && <ArchitecturePage />}
